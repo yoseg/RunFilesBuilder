@@ -6,7 +6,7 @@
 # Blog: wkdaily.cpolar.cn
 #=================================================
 
-name: Make nikki run files for 23.05
+name: Make momo run files 24.10
 
 on:
   workflow_dispatch:
@@ -19,31 +19,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       
-      - name: Fetch latest release tag from nikki
+      - name: Fetch latest release tag from momo
         id: fetch_latest_tag
         run: |
-          latest_tag=$(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-nikki/releases/latest | jq -r '.tag_name')
-          
+          latest_tag=$(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-momo/releases/latest | jq -r '.tag_name')
           echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-          # https://github.com/nikkinikki-org/OpenWrt-nikki/releases/download/v1.17.5/nikki_aarch64_cortex-a53-openwrt-23.05.tar.gz
-
+          
       - name: Clone makeself repository
         run: git clone https://github.com/megastep/makeself.git
 
-      - name: Download latest nikki files
+      - name: Download latest momo files
         run: |
-          curl -LO $(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-nikki/releases/latest | grep -oP '"browser_download_url":\s*".*nikki_aarch64_cortex-a53-openwrt-24.10.tar.gz"' | cut -d '"' -f 4)
-          curl -LO $(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-nikki/releases/latest | grep -oP '"browser_download_url":\s*".*nikki_x86_64-openwrt-24.10.tar.gz"' | cut -d '"' -f 4)
-          tar --one-top-level=nikki_aarch64_cortex-a53-openwrt-24.10 -xvzf nikki_aarch64_cortex-a53-openwrt-24.10.tar.gz
-          tar --one-top-level=nikki_x86_64-openwrt-24.10 -xvzf nikki_x86_64-openwrt-24.10.tar.gz
+          curl -LO $(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-momo/releases/latest | grep -oP '"browser_download_url":\s*".*momo_aarch64_cortex-a53-openwrt-24.10.tar.gz"' | cut -d '"' -f 4)
+          curl -LO $(curl -s https://api.github.com/repos/nikkinikki-org/OpenWrt-momo/releases/latest | grep -oP '"browser_download_url":\s*".*momo_x86_64-openwrt-24.10.tar.gz"' | cut -d '"' -f 4)
+          tar --one-top-level=momo_aarch64_cortex-a53-openwrt-24.10 -xvzf momo_aarch64_cortex-a53-openwrt-24.10.tar.gz
+          tar --one-top-level=momo_x86_64-openwrt-24.10 -xvzf momo_x86_64-openwrt-24.10.tar.gz
 
       - name: Organize files for aarch64_cortex-a53&x86_64
         run: |
-          mkdir nikki_x86_64 nikki_aarch64_cortex-a53
-          cp nikki_x86_64-openwrt-24.10/*.ipk nikki_x86_64/
-          cp nikki_aarch64_cortex-a53-openwrt-24.10/*.ipk nikki_aarch64_cortex-a53/
+          mkdir momo_x86_64 momo_aarch64_cortex-a53
+          cp momo_x86_64-openwrt-24.10/*.ipk momo_x86_64/
+          cp momo_aarch64_cortex-a53-openwrt-24.10/*.ipk momo_aarch64_cortex-a53/
           # 保存当前路径并进入目标目录
-          pushd "nikki_x86_64" >/dev/null || exit 1
+          pushd "momo_x86_64" >/dev/null || exit 1
           for file in *~*.ipk; do
           [ -e "$file" ] || continue
           # 构造新文件名，去除 ~ 字符
@@ -59,7 +57,7 @@ jobs:
           done
           popd >/dev/null
 
-          pushd "nikki_aarch64_cortex-a53" >/dev/null || exit 1
+          pushd "momo_aarch64_cortex-a53" >/dev/null || exit 1
           for file in *~*.ipk; do
           [ -e "$file" ] || continue
           # 构造新文件名，去除 ~ 字符
@@ -78,7 +76,7 @@ jobs:
 
       - name: Create install.sh scripts
         run: |
-          cat <<EOF > nikki_x86_64/install.sh
+          cat <<EOF > momo_x86_64/install.sh
           #!/bin/sh
           opkg update
           if [ $? -ne 0 ]; then
@@ -87,31 +85,31 @@ jobs:
           fi
           opkg install *.ipk
           EOF
-          chmod +x nikki_x86_64/install.sh
-          cp nikki_x86_64/install.sh nikki_aarch64_cortex-a53/install.sh
+          chmod +x momo_x86_64/install.sh
+          cp momo_x86_64/install.sh momo_aarch64_cortex-a53/install.sh
           
 
-      - name: Move nikki directories to makeself
+      - name: Move momo directories to makeself
         run: |
-          mv nikki_x86_64 makeself/
-          mv nikki_aarch64_cortex-a53 makeself/
+          mv momo_x86_64 makeself/
+          mv momo_aarch64_cortex-a53 makeself/
 
       - name: Create self-extracting packages
         run: |
           cd makeself
-          ./makeself.sh nikki_x86_64/ nikki_${{ env.LATEST_TAG }}_x86_64.run "by github action" ./install.sh
-          ./makeself.sh nikki_aarch64_cortex-a53/ nikki_${{ env.LATEST_TAG }}_aarch64_cortex-a53.run "by github action" ./install.sh
+          ./makeself.sh momo_x86_64/ momo_${{ env.LATEST_TAG }}_x86_64.run "by github action" ./install.sh
+          ./makeself.sh momo_aarch64_cortex-a53/ momo_${{ env.LATEST_TAG }}_aarch64_cortex-a53.run "by github action" ./install.sh
           
 
       - name: Check file sizes
         run: |
-          ls -lh makeself/nikki_*.run
+          ls -lh makeself/momo_*.run
 
       - name: Fetch latest release details
         id: fetch_release_details
         run: |
-          extra_content="![Github](https://img.shields.io/badge/nikki.run-123456?logo=github&logoColor=fff&labelColor=yellow&style=for-the-badge) [![Github](https://img.shields.io/badge/国内加速站下载-FC7C0D?logo=github&logoColor=fff&labelColor=000&style=for-the-badge)](https://wkdaily.cpolar.cn/archives/1) ![GitHub Downloads (all assets, specific tag)](https://img.shields.io/github/downloads/wukongdaily/RunFilesBuilder/${{ env.LATEST_TAG }}/total?style=for-the-badge&labelColor=black&color=%2325c2a0)"
-          sed -i "1i$extra_content" "${{ github.workspace }}/info.md"
+          extra_content="![Github](https://img.shields.io/badge/momo.run-123456?logo=github&logoColor=fff&labelColor=5cb85c&style=for-the-badge) [![Github](https://img.shields.io/badge/国内加速站下载-FC7C0D?logo=github&logoColor=fff&labelColor=000&style=for-the-badge)](https://wkdaily.cpolar.cn/archives/1) ![GitHub Downloads (all assets, specific tag)](https://img.shields.io/github/downloads/wukongdaily/RunFilesBuilder/${{ env.LATEST_TAG }}/total?style=for-the-badge&labelColor=black&color=%2325c2a0)"
+          sed -i "1i$extra_content" "${{ github.workspace }}/momo.md"
 
       - name: Print release notes
         run: |
@@ -125,14 +123,14 @@ jobs:
           tag_name: ${{ env.LATEST_TAG }}
           target_commitish: ${{ github.ref_name }}
           prerelease: false
-          body_path: ${{ github.workspace }}/info.md
+          body_path: ${{ github.workspace }}/momo.md
 
       - name: Upload run files as release assets
         uses: softprops/action-gh-release@v2.1.0
         with:
           tag_name: ${{ env.LATEST_TAG }}
-          name: "nikki-${{ env.LATEST_TAG }}"
-          files: makeself/nikki_*.run
+          name: "momo-${{ env.LATEST_TAG }}"
+          files: makeself/momo_*.run
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
